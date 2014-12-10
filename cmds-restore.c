@@ -656,6 +656,8 @@ static int copy_file(struct btrfs_root *root, int fd, struct btrfs_key *key,
 	int loops = 0;
 	u64 bytes_written, next_pos = 0ULL;
 	u64 total_written = 0ULL;
+#define MAYBE_NL (verbose && (next_pos >> display_shift) ? "\n" : "")
+	const u64 display_shift = 16;
 	struct stat st;
 
 	path = btrfs_alloc_path();
@@ -749,6 +751,10 @@ static int copy_file(struct btrfs_root *root, int fd, struct btrfs_key *key,
 			printf("Weird extent type %d\n", extent_type);
 		}
 		total_written += bytes_written;
+		if (verbose && 
+		    ((next_pos +  bytes_written) >> display_shift) > 
+		    (next_pos >> display_shift))
+			fprintf(stderr, "+");
 		next_pos = found_key.offset + bytes_written;
 		if (ret) {
 			fprintf(stderr, "ERROR after writing %llu bytes\n",
@@ -762,6 +768,8 @@ next:
 
 set_size:
 	btrfs_free_path(path);
+
+	printf(MAYBE_NL);
 	if (get_xattrs) {
 		ret = set_file_xattrs(root, key->objectid, fd, file);
 		if (ret)
