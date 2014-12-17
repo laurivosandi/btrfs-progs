@@ -285,8 +285,10 @@ static void print_usage(void)
 	fprintf(stderr, "\t -r --rootdir the source directory\n");
 	fprintf(stderr, "\t -K --nodiscard do not perform whole device TRIM\n");
 	fprintf(stderr, "\t -O --features comma separated list of filesystem features\n");
+	fprintf(stderr, "\t -q --quiet enable quiet mode\n");
 	fprintf(stderr, "\t -U --uuid specify the filesystem UUID\n");
 	fprintf(stderr, "\t -V --version print the mkfs.btrfs version and exit\n");
+	fprintf(stderr, "\t -v --verbose enable verbose mode\n");
 	fprintf(stderr, "%s\n", PACKAGE_STRING);
 	exit(1);
 }
@@ -976,7 +978,7 @@ out:
  * This ignores symlinks with unreadable targets and subdirs that can't
  * be read.  It's a best-effort to give a rough estimate of the size of
  * a subdir.  It doesn't guarantee that prepopulating btrfs from this
- * tree won't still run out of space. 
+ * tree won't still run out of space.
  *
  * The rounding up to 4096 is questionable.  Previous code used du -B 4096.
  */
@@ -1223,6 +1225,8 @@ int main(int ac, char **av)
 	int discard = 1;
 	int ssd = 0;
 	int force_overwrite = 0;
+	int verbose = 0;
+	int quiet = 0;
 
 	char *source_dir = NULL;
 	int source_dir_set = 0;
@@ -1250,6 +1254,8 @@ int main(int ac, char **av)
 			{ "sectorsize", 1, NULL, 's' },
 			{ "data", 1, NULL, 'd' },
 			{ "version", 0, NULL, 'V' },
+			{ "verbose", 0, NULL, 'v' },
+			{ "quiet", 0, NULL, 'q' },
 			{ "rootdir", 1, NULL, 'r' },
 			{ "nodiscard", 0, NULL, 'K' },
 			{ "features", 1, NULL, 'O' },
@@ -1257,7 +1263,7 @@ int main(int ac, char **av)
 			{ NULL, 0, NULL, 0}
 		};
 
-		c = getopt_long(ac, av, "A:b:fl:n:s:m:d:L:O:r:U:VMK",
+		c = getopt_long(ac, av, "A:b:fl:n:s:m:d:L:O:r:U:VMKqv",
 				long_options, &option_index);
 		if (c < 0)
 			break;
@@ -1331,6 +1337,12 @@ int main(int ac, char **av)
 				break;
 			case 'K':
 				discard = 0;
+				break;
+			case 'v':
+				verbose = 1;
+				break;
+			case 'q':
+				quiet = 1;
 				break;
 			default:
 				print_usage();
