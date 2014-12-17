@@ -1236,7 +1236,7 @@ int main(int ac, char **av)
 	int dev_cnt = 0;
 	int saved_optind;
 	char estr[100];
-	char *fs_uuid = NULL;
+	char fs_uuid[BTRFS_UUID_UNPARSED_SIZE] = { 0 };
 	u64 features = DEFAULT_MKFS_FEATURES;
 
 	while(1) {
@@ -1333,7 +1333,8 @@ int main(int ac, char **av)
 				source_dir_set = 1;
 				break;
 			case 'U':
-				fs_uuid = optarg;
+				strncpy(fs_uuid, optarg,
+					BTRFS_UUID_UNPARSED_SIZE - 1);
 				break;
 			case 'K':
 				discard = 0;
@@ -1364,7 +1365,7 @@ int main(int ac, char **av)
 		exit(1);
 	}
 
-	if (fs_uuid) {
+	if (*fs_uuid) {
 		uuid_t dummy_uuid;
 
 		if (uuid_parse(fs_uuid, dummy_uuid) != 0) {
