@@ -1291,7 +1291,7 @@ static void list_all_devices(struct btrfs_root *root)
 	}
 
 	printf("\n");
-	printf("  Total devices size:                        %10s\n",
+	printf("  Total devices size: %10s\n",
 		pretty_size(total_block_count));
 }
 
