@@ -1753,7 +1753,6 @@ raid_groups:
 		printf("\n");
 
 		printf("  Node size:\t\t%u\n", nodesize);
-		printf("  Leaf size:\t\t%u\n", leafsize);
 		printf("  Sector size:\t\t%u\n", sectorsize);
 		printf("  Initial chunks:\n");
 		if (allocation.data)
