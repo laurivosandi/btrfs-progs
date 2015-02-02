@@ -1747,19 +1747,19 @@ raid_groups:
 		printf("  UUID:\t\t\t%s\n", fs_uuid);
 		printf("\n");
 
-		printf("  Node size:\t\t%u\n", nodesize);
-		printf("  Sector size:\t\t%u\n", sectorsize);
+		printf("  Node size:\t\t%5u\n", nodesize);
+		printf("  Sector size:\t\t%5u\n", sectorsize);
 		printf("  Initial chunks:\n");
 		if (allocation.data)
-			printf("    Data:\t\t%s\n",
+			printf("    Data:\t\t%10s\n",
 				pretty_size(allocation.data));
 		if (allocation.metadata)
-			printf("    Metadata:\t\t%s\n",
+			printf("    Metadata:\t\t%10s\n",
 				pretty_size(allocation.metadata));
 		if (allocation.mixed)
-			printf("    Data+Metadata:\t%s\n",
+			printf("    Data+Metadata:\t%10s\n",
 				pretty_size(allocation.mixed));
-		printf("    System:\t\t%s\n",
+		printf("    System:\t\t%10s\n",
 			pretty_size(allocation.system));
 		printf("  Metadata profile:\t%s\n",
 			btrfs_group_profile_str(metadata_profile));
