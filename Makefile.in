@@ -70,7 +70,8 @@ endif
 MAKEOPTS = --no-print-directory Q=$(Q)
 
 # build all by default
-progs = $(progs_install) btrfsck btrfs-corrupt-block btrfs-calc-size
+progs = $(progs_install) btrfsck btrfs-corrupt-block btrfs-calc-size btrfs-raw \
+	btrfs-search-metadata
 
 # install only selected
 progs_install = btrfs mkfs.btrfs btrfs-debug-tree \
