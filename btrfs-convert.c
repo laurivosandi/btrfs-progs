@@ -2809,6 +2809,7 @@ static void print_usage(void)
 	printf("\t-l|--label LABEL       set filesystem label\n");
 	printf("\t-L|--copy-label        use label from converted filesystem\n");
 	printf("\t-p|--progress          show converting progress (default)\n");
+	printf("\t-O|--features LIST     comma separated list of filesystem features\n");
 	printf("\t--no-progress          show only overview, not the detailed progress\n");
 }
 
@@ -2826,6 +2827,7 @@ int main(int argc, char *argv[])
 	int progress = 1;
 	char *file;
 	char *fslabel = NULL;
+	u64 features = BTRFS_MKFS_DEFAULT_FEATURES;
 
 	while(1) {
 		int long_index;
@@ -2837,13 +2839,14 @@ int main(int argc, char *argv[])
 			{ "no-inline", no_argument, NULL, 'n' },
 			{ "no-xattr", no_argument, NULL, 'i' },
 			{ "rollback", no_argument, NULL, 'r' },
+			{ "features", required_argument, NULL, 'O' },
 			{ "progress", no_argument, NULL, 'p' },
 			{ "label", required_argument, NULL, 'l' },
 			{ "copy-label", no_argument, NULL, 'L' },
 			{ "nodesize", required_argument, NULL, 'N' },
 			{ NULL, 0, NULL, 0 }
 		};
-		int c = getopt_long(argc, argv, "dinN:rl:Lp", long_options,
+		int c = getopt_long(argc, argv, "dinN:rl:LO:p", long_options,
 				&long_index);
 
 		if (c < 0)
@@ -2880,6 +2883,34 @@ int main(int argc, char *argv[])
 			case 'p':
 				progress = 1;
 				break;
+			case 'O': {
+				char *orig = strdup(optarg);
+				char *tmp = orig;
+
+				tmp = btrfs_parse_fs_features(tmp, &features);
+				if (tmp) {
+					fprintf(stderr,
+						"Unrecognized filesystem feature '%s'\n",
+							tmp);
+					free(orig);
+					exit(1);
+				}
+				free(orig);
+				if (features & BTRFS_FEATURE_LIST_ALL) {
+					btrfs_list_all_fs_features(
+						~BTRFS_CONVERT_ALLOWED_FEATURES);
+					exit(0);
+				}
+				if (features & ~BTRFS_CONVERT_ALLOWED_FEATURES) {
+					/* TODO: be explicit */
+					fprintf(stderr,
+						"Feature combination 0x%llx not allowed for convert\n",
+						features & ~BTRFS_CONVERT_ALLOWED_FEATURES);
+					exit(1);
+				}
+
+				break;
+				}
 			case GETOPT_VAL_NO_PROGRESS:
 				progress = 0;
 				break;
