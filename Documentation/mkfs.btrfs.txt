@@ -124,10 +124,10 @@ the system.
 Print the *mkfs.btrfs* version and exit.
 
 -v|--verbose::
-Increase the verbosity of the command.
+Print more details about the created filesystem.
 
 -q|--quiet::
-Print only the errors.
+Print only the errors, also disables effects of --verbose.
 
 -h::
 Print help.
