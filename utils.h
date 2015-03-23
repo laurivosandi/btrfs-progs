@@ -26,6 +26,24 @@
 #define BTRFS_MKFS_SYSTEM_GROUP_SIZE (4 * 1024 * 1024)
 #define BTRFS_MKFS_SMALL_VOLUME_SIZE (1024 * 1024 * 1024)
 #define BTRFS_MKFS_DEFAULT_NODE_SIZE 16384
+#define BTRFS_MKFS_DEFAULT_FEATURES 				\
+		(BTRFS_FEATURE_INCOMPAT_EXTENDED_IREF		\
+		| BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA)
+
+/*
+ * Avoid multi-device features (RAID56) and mixed block groups
+ */
+#define BTRFS_CONVERT_ALLOWED_FEATURES				\
+	(BTRFS_FEATURE_INCOMPAT_MIXED_BACKREF			\
+	| BTRFS_FEATURE_INCOMPAT_DEFAULT_SUBVOL			\
+	| BTRFS_FEATURE_INCOMPAT_COMPRESS_LZO			\
+	| BTRFS_FEATURE_INCOMPAT_COMPRESS_LZOv2			\
+	| BTRFS_FEATURE_INCOMPAT_BIG_METADATA			\
+	| BTRFS_FEATURE_INCOMPAT_EXTENDED_IREF			\
+	| BTRFS_FEATURE_INCOMPAT_SKINNY_METADATA		\
+	| BTRFS_FEATURE_INCOMPAT_NO_HOLES)
+
+#define BTRFS_FEATURE_LIST_ALL		(1ULL << 63)
 
 #define BTRFS_SCAN_MOUNTED	(1ULL << 0)
 #define BTRFS_SCAN_LBLKID	(1ULL << 1)
@@ -80,9 +98,13 @@ void set_argv0(char **argv);
 void units_set_mode(unsigned *units, unsigned mode);
 void units_set_base(unsigned *units, unsigned base);
 
+void btrfs_list_all_fs_features(u64 mask_disallowed);
+char* btrfs_parse_fs_features(char *namelist, u64 *flags);
+void btrfs_process_fs_features(u64 flags);
+
 int make_btrfs(int fd, const char *device, const char *label,
 	       char *fs_uuid, u64 blocks[6], u64 num_bytes, u32 nodesize,
-	       u32 leafsize, u32 sectorsize, u32 stripesize, u64 features);
+	       u32 sectorsize, u32 stripesize, u64 features);
 int btrfs_make_root_dir(struct btrfs_trans_handle *trans,
 			struct btrfs_root *root, u64 objectid);
 int btrfs_prepare_device(int fd, char *file, int zero_end, u64 *block_count_ret,
@@ -90,7 +112,7 @@ int btrfs_prepare_device(int fd, char *file, int zero_end, u64 *block_count_ret,
 int btrfs_add_to_fsid(struct btrfs_trans_handle *trans,
 		      struct btrfs_root *root, int fd, char *path,
 		      u64 block_count, u32 io_width, u32 io_align,
-		      u32 sectorsize);
+		      u32 sectorsize, int verbose);
 int btrfs_scan_for_fsid(int run_ioctls);
 int btrfs_register_one_device(const char *fname);
 int btrfs_register_all_devices(void);
@@ -209,6 +231,6 @@ static inline u64 div_factor(u64 num, int factor)
 }
 
 int btrfs_tree_search2_ioctl_supported(int fd);
-int btrfs_check_node_or_leaf_size(u32 size, u32 sectorsize);
+int btrfs_check_nodesize(u32 nodesize, u32 sectorsize);
 
 #endif
