@@ -12,7 +12,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 *btrfs balance* is used to balance chunks in a btrfs filesystem across
-multiple or even single device.
+multiple or even single device. Yes.
 
 See `btrfs-device`(8) for more details about the effect on device management.
 
