@@ -67,6 +67,8 @@ struct btrfs_receive
 	struct subvol_uuid_search sus;
 
 	int honor_end_cmd;
+
+	char *explicit_parent;
 };
 
 static int finish_subvol(struct btrfs_receive *r)
@@ -227,8 +229,15 @@ static int process_snapshot(const char *path, const u8 *uuid, u64 ctransid,
 	memset(&args_v2, 0, sizeof(args_v2));
 	strncpy_null(args_v2.name, path);
 
-	parent_subvol = subvol_uuid_search(&r->sus, 0, parent_uuid,
-			parent_ctransid, NULL, subvol_search_by_received_uuid);
+	if (r->explicit_parent) {
+		parent_subvol = subvol_uuid_search(&r->sus, 0, NULL,
+				0, r->explicit_parent, subvol_search_by_path);
+	} else {
+		parent_subvol = subvol_uuid_search(&r->sus, 0, parent_uuid,
+				parent_ctransid, NULL, subvol_search_by_received_uuid);
+	}
+
+
 	if (!parent_subvol) {
 		parent_subvol = subvol_uuid_search(&r->sus, 0, parent_uuid,
 				parent_ctransid, NULL, subvol_search_by_uuid);
@@ -930,6 +939,7 @@ int cmd_receive(int argc, char **argv)
 	r.mnt_fd = -1;
 	r.write_fd = -1;
 	r.dest_dir_fd = -1;
+	r.explicit_parent = NULL;
 
 	while (1) {
 		int c;
@@ -938,7 +948,7 @@ int cmd_receive(int argc, char **argv)
 			{ NULL, 0, NULL, 0 }
 		};
 
-		c = getopt_long(argc, argv, "evf:", long_opts, NULL);
+		c = getopt_long(argc, argv, "evf:p:", long_opts, NULL);
 		if (c < 0)
 			break;
 
@@ -954,6 +964,9 @@ int cmd_receive(int argc, char **argv)
 			break;
 		case 'E':
 			max_errors = arg_strtou64(optarg);
+			break;
+		case 'p':
+			r.explicit_parent = optarg;
 			break;
 		case '?':
 		default:
@@ -1004,5 +1017,7 @@ const char * const cmd_receive_usage[] = {
 	"--max-errors <N> Terminate as soon as N errors happened while",
 	"                 processing commands from the send stream.",
 	"                 Default value is 1. A value of 0 means no limit.",
+	"-p <parent>      Disables the automatic searching for parents if incremental",
+	"                 streams are received.",
 	NULL
 };
