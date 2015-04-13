@@ -867,15 +867,23 @@ static int do_receive(struct btrfs_receive *r, const char *tomnt, int r_fd,
 		goto out;
 	}
 
-	/*
-	 * find_mount_root returns a root_path that is a subpath of
-	 * dest_dir_full_path. Now get the other part of root_path,
-	 * which is the destination dir relative to root_path.
-	 */
-	r->dest_dir_path = dest_dir_full_path + strlen(r->root_path);
-	while (r->dest_dir_path[0] == '/')
-		r->dest_dir_path++;
 
+    /**
+     * Nasty hack to enforce chroot before parsing btrfs stream
+     */
+    if (chroot(dest_dir_full_path)) {
+		fprintf(stderr,
+			"ERROR: failed to chroot to %s\n",
+			dest_dir_full_path);
+		ret = -EINVAL;
+		goto out;
+    }
+
+    r->dest_dir_path = malloc(2);
+    r->dest_dir_path[0] = '/';
+    r->dest_dir_path[1] = '\00';
+    r->root_path = r->dest_dir_path;
+    
 	ret = subvol_uuid_search_init(r->mnt_fd, &r->sus);
 	if (ret < 0)
 		goto out;
