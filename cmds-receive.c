@@ -868,22 +868,19 @@ static int do_receive(struct btrfs_receive *r, const char *tomnt, int r_fd,
 	}
 
 
-    /**
-     * Nasty hack to enforce chroot before parsing btrfs stream
-     */
-    if (chroot(dest_dir_full_path)) {
+	/**
+	 * Nasty hack to enforce chroot before parsing btrfs stream
+	 */
+	if (chroot(dest_dir_full_path)) {
 		fprintf(stderr,
 			"ERROR: failed to chroot to %s\n",
 			dest_dir_full_path);
 		ret = -EINVAL;
 		goto out;
-    }
+	}
 
-    r->dest_dir_path = malloc(2);
-    r->dest_dir_path[0] = '/';
-    r->dest_dir_path[1] = '\00';
-    r->root_path = r->dest_dir_path;
-    
+	r->root_path = r->dest_dir_path = strdup("/");
+	
 	ret = subvol_uuid_search_init(r->mnt_fd, &r->sus);
 	if (ret < 0)
 		goto out;
