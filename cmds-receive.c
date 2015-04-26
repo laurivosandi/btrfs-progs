@@ -61,6 +61,7 @@ struct btrfs_receive
 	char *root_path;
 	char *dest_dir_path; /* relative to root_path */
 	char *full_subvol_path;
+	char *explicit_parent_path;
 	int dest_dir_chroot;
 
 	struct subvol_info *cur_subvol;
@@ -220,20 +221,32 @@ static int process_snapshot(const char *path, const u8 *uuid, u64 ctransid,
 		fprintf(stderr, "receiving snapshot %s uuid=%s, "
 				"ctransid=%llu ", path, uuid_str,
 				r->cur_subvol->stransid);
-		uuid_unparse(parent_uuid, uuid_str);
-		fprintf(stderr, "parent_uuid=%s, parent_ctransid=%llu\n",
-				uuid_str, parent_ctransid);
 	}
 
 	memset(&args_v2, 0, sizeof(args_v2));
 	strncpy_null(args_v2.name, path);
 
-	parent_subvol = subvol_uuid_search(&r->sus, 0, parent_uuid,
-			parent_ctransid, NULL, subvol_search_by_received_uuid);
-	if (!parent_subvol) {
+	if (r->explicit_parent_path) {
+		if (g_verbose) {
+			fprintf(stderr, "using explicit parent %s\n",
+					r->explicit_parent_path);
+		}
+		parent_subvol = subvol_uuid_search(&r->sus, 0, NULL,
+			0, r->explicit_parent_path, subvol_search_by_path);
+	} else {
+		if (g_verbose) {
+			uuid_unparse(parent_uuid, uuid_str);
+			fprintf(stderr, "parent_uuid=%s, parent_ctransid=%llu\n",
+					uuid_str, parent_ctransid);
+		}
 		parent_subvol = subvol_uuid_search(&r->sus, 0, parent_uuid,
-				parent_ctransid, NULL, subvol_search_by_uuid);
+			parent_ctransid, NULL, subvol_search_by_received_uuid);
+		if (!parent_subvol) {
+			parent_subvol = subvol_uuid_search(&r->sus, 0, parent_uuid,
+					parent_ctransid, NULL, subvol_search_by_uuid);
+		}
 	}
+
 	if (!parent_subvol) {
 		ret = -ENOENT;
 		fprintf(stderr, "ERROR: could not find parent subvolume\n");
@@ -962,11 +975,14 @@ int cmd_receive(int argc, char **argv)
 			{ NULL, 0, NULL, 0 }
 		};
 
-		c = getopt_long(argc, argv, "Cevf:", long_opts, NULL);
+		c = getopt_long(argc, argv, "Cevf:p:", long_opts, NULL);
 		if (c < 0)
 			break;
 
 		switch (c) {
+		case 'p':
+			r.explicit_parent_path = optarg;
+			break;
 		case 'v':
 			g_verbose++;
 			break;
@@ -1028,6 +1044,8 @@ const char * const cmd_receive_usage[] = {
 	"                 in the data stream. Without this option,",
 	"                 the receiver terminates only if an error",
 	"                 is recognized or on EOF.",
+	"-p <subvol>      Disables the automatic searching for parents",
+	"                 if incremental streams are received.",
 	"-C|--chroot      confine the process to <mount> using chroot",
 	"--max-errors <N> Terminate as soon as N errors happened while",
 	"                 processing commands from the send stream.",
